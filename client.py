@@ -226,18 +226,31 @@ try:
   dbname = configur.get('rds', 'db_name')
 
   dbConn = datatier.get_dbConn(endpoint, portnum, username, pwd, dbname)
+  dbCursor = dbConn.cursor()
 
   if dbConn is None:
     print('**ERROR: unable to connect to database, exiting')
     sys.exit(0)
-
+  
+  user_id = input("Please enter your user ID: ")
+  sqlUser = """
+      SELECT * from users WHERE userid = %s;
+      """
+  
+  dbCursor.execute(sqlUser, [user_id])
+  user = dbCursor.fetchone()
+  
+  if user is None or user == ():
+      print("No such user...")
+  else:
+    baseurl += "/" + str(user_id)
+    print("User successfully found!")
 
   cmd = prompt()
-
   while cmd != 0:
     #
     if cmd == 1:
-      users(baseurl)
+      journal_upload(baseurl)
     else:
       print("** Unknown command, try again...")
     #
