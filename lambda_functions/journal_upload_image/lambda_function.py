@@ -47,16 +47,15 @@ def lambda_handler(event, context):
     #
     print("**Accessing request body**")
     
-    if "uid" not in event["queryStringParameters"]:
-        raise Exception("event has no uid")
+    if "uid" in event:
+      uid = event["uid"]
         
-    uid = event["queryStringParameters"]["uid"]
     print("uid:", uid)
 
-    if "body" not in event["queryStringParameters"]:
+    if "body" not in event:
       raise Exception("event has no body")
       
-    body = json.loads(event["queryStringParameters"]["body"]) # parse the json
+    body = json.loads(event["body"]) # parse the json
     
     if "notes" not in body:
       raise Exception("event has a body but no notes")
@@ -77,7 +76,6 @@ def lambda_handler(event, context):
     water = body["water"]
     social = body["social"]
     overall = body["overall"]
-    # get datetime sql format
     date = time.strftime('%Y-%m-%d %H:%M:%S')
 
     print("Got data from the client:")
