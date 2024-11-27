@@ -13,7 +13,7 @@ CREATE TABLE users
 (
     uid       int not null AUTO_INCREMENT,
     username  varchar(64) not null,
-    PRIMARY KEY  (userid),
+    PRIMARY KEY  (uid),
     unique(username)
 );
 
@@ -33,7 +33,7 @@ CREATE TABLE entries
     social	      int not null,
     overall  	      int not null,
     PRIMARY KEY (entryid),
-    FOREIGN KEY (userid) REFERENCES users(userid),
+    FOREIGN KEY (uid) REFERENCES users(uid),
     UNIQUE (date)
 );
 
@@ -49,7 +49,7 @@ CREATE TABLE images
     date	    datetime not null,
     bucketkey	    varchar(256) not null,
     PRIMARY KEY (imageid),
-    FOREIGN KEY (userid) REFERENCES users(userid),
+    FOREIGN KEY (uid) REFERENCES users(uid),
     UNIQUE (date),
     UNIQUE (bucketkey)
 )
