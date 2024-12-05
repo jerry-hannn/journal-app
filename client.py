@@ -15,7 +15,7 @@
 #   CS 310
 #
 
-import datatier
+import pymysql
 import requests
 import jsons
 
@@ -195,6 +195,21 @@ def picture_upload(baseurl):
     logging.error(e)
     return
 
+def get_dbConn(endpoint, portnum, username, pwd, dbname):
+  try:
+    dbConn = pymysql.connect(host=endpoint,
+                             port=int(portnum),
+                             user=username,
+                             passwd=pwd,
+                             database=dbname)
+
+                        
+                          
+    return dbConn
+  except Exception as e:
+    logging.error("datatier.get_dbConn() failed:")
+    logging.error(e)
+    return None
 
 ############################################################
 # main
@@ -209,7 +224,7 @@ try:
   #
   # what config file should we use for this session?
   #
-  config_file = "" # FIX THIS PART
+  config_file = "journalapp-config.ini"
 
   print("Config file to use for this session?")
   print("Press ENTER to use default, or")
@@ -256,12 +271,12 @@ try:
 
   print("Connecting to RDS...")
   endpoint = configur.get('rds', 'endpoint')
-  portnum = (configur.get('rds', 'port_number'))
+  portnum = configur.get('rds', 'port_number')
   username = configur.get('rds', 'user_name')
   pwd = configur.get('rds', 'user_pwd')
   dbname = configur.get('rds', 'db_name')
 
-  dbConn = datatier.get_dbConn(endpoint, portnum, username, pwd, dbname)
+  dbConn = get_dbConn(endpoint, portnum, username, pwd, dbname)
   dbCursor = dbConn.cursor()
 
   if dbConn is None:
@@ -325,3 +340,4 @@ def valid_status_code(res, url):
         body = res.json()
         print("Error message:", body)
       return False
+    
