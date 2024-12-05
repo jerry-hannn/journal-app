@@ -1,7 +1,6 @@
 #
-# Uploads a PDF to S3 and then inserts a new job record
-# in the JournalApp database with a status of 'uploaded'.
-# Sends the job id back to the client.
+# Inserts a new entry record
+# in the JournalApp database
 #
 
 import json
@@ -47,10 +46,10 @@ def lambda_handler(event, context):
     #
     print("**Accessing request body**")
     
-    if "uid" not in event["queryStringParameters"]:
+    if "uid" not in event["pathParameters"]:
         raise Exception("event has no uid")
         
-    uid = event["queryStringParameters"]["uid"]
+    uid = event["pathParameters"]["uid"]
     print("uid:", uid)
 
     if "body" not in event["queryStringParameters"]:
@@ -112,23 +111,15 @@ def lambda_handler(event, context):
       }
     
     print(row)
-
-    #
-    # Remember that the processing of the PDF is event-triggered,
-    # and that lambda function is going to update the database as
-    # is processes. So let's insert a job record into the database
-    # first, THEN upload the PDF to S3. The status column should 
-    # be set to 'uploaded':
-    #
     print("**Adding entries row to database**")
     
     sql = """
-      INSERT INTO jobs(uid, date, notes, sleep, eat, water, social, overall)
+      INSERT INTO entries(uid, date, notes, sleep, eat, water, social, overall)
                   VALUES(%s, %s, %s, %s, %s, %s, %s, %s);
     """
     
     #
-    # TODO #2 of 3: what values should we insert into the database?
+    # Insert the entry into the database:
     #
     datatier.perform_action(dbConn, sql, [uid, date, notes, sleep, eat, water, social, overall])
 
@@ -136,7 +127,7 @@ def lambda_handler(event, context):
     # respond in an HTTP-like way, i.e. with a status
     # code and body in JSON format:
     #
-    print("**DONE, returning jobid**")
+    print("**DONE, returning ok**")
     
     return {
       'statusCode': 200,
