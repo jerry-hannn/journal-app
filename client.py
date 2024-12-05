@@ -37,59 +37,7 @@ from configparser import ConfigParser
 # The better approach is to repeat at least N times (typically 
 # N=3), and then give up after N tries.
 #
-def web_service_get(url):
-  """
-  Submits a GET request to a web service at most 3 times, since 
-  web services can fail to respond e.g. to heavy user or internet 
-  traffic. If the web service responds with status code 200, 400 
-  or 500, we consider this a valid response and return the response.
-  Otherwise we try again, at most 3 times. After 3 attempts the 
-  function returns with the last response.
-  
-  Parameters
-  ----------
-  url: url for calling the web service
-  
-  Returns
-  -------
-  response received from web service
-  """
 
-  try:
-    retries = 0
-    
-    while True:
-      response = requests.get(url)
-        
-      if response.status_code in [200, 400, 480, 481, 482, 500]:
-        #
-        # we consider this a successful call and response
-        #
-        break
-
-      #
-      # failed, try again?
-      #
-      retries = retries + 1
-      if retries < 3:
-        # try at most 3 times
-        time.sleep(retries)
-        continue
-          
-      #
-      # if get here, we tried 3 times, we give up:
-      #
-      break
-
-    return response
-
-  except Exception as e:
-    print("**ERROR**")
-    logging.error("web_service_get() failed:")
-    logging.error("url: " + url)
-    logging.error(e)
-    return None
-    
 
 ############################################################
 #
@@ -152,7 +100,7 @@ def valid_status_code(res, url):
 
 
 def journal_upload(baseurl):
-  url = baseurl + "/upload-entry/" + str(11111)
+  url = baseurl + "/upload-entry/" + userid
   try:
     print("For all ratings, please type in an integer!")
     sleep_score = int(input("Rate your sleep today on a scale from 0 to 10: "))
@@ -170,7 +118,7 @@ def journal_upload(baseurl):
     notes = input("If you'd like, journal about what happened today: ")
 
     body = {"sleep": sleep_score, "eat": food_score, "water": water_score, 
-              "social": social_score, "overall_score": overall_score, "notes": notes}
+              "social": social_score, "overall": overall_score, "notes": notes}
 
     res = requests.post(url, json=body)
 
@@ -224,12 +172,22 @@ def picture_upload(baseurl):
     return
 
 def get_quote(baseurl):
-  return
+  url = baseurl + "/generate-quote/" + userid
+  print("Waiting for quote generation...")
+  res = requests.get(url)
+
+  if valid_status_code(res, url):
+    print(res.json()['quote'])
+  else:
+    return
+  
 
 def journal_download(baseurl):
+  #TODO
   return
 
 def get_stats(baseurl):
+  #TODO
   return
 
 
