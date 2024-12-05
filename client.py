@@ -111,13 +111,7 @@ def prompt():
     print()
     print(">> Enter a command:")
     print("   0 => end")
-    print("   1 => users")
-    """
-    print("   2 => jobs")
-    print("   3 => reset database")
-    print("   4 => upload pdf")
-    print("   5 => download results")
-    print("   6 => upload and poll")"""
+    print("   1 => journal_upload")
 
     cmd = input()
 
@@ -152,12 +146,54 @@ def journal_upload(baseurl):
     url = baseurl + "/upload-entry"
     res = requests.post(url, json=body)
 
+    if valid_status_code(res, url):
+      pass
+    else:
+      return
+
   except:
     logging.error("**ERROR: journal_upload() failed:")
     logging.error("url: " + url)
     logging.error(e)
     return
 
+
+def picture_upload(baseurl):
+  try:
+    print("Enter picture filename>")
+    local_filename = input()
+
+    if not pathlib.Path(local_filename).is_file():
+      print("Image '", local_filename, "' does not exist...")
+      return
+
+    infile = open(local_filename, "rb")
+    bytes = infile.read()
+    infile.close()
+
+    datastr = ""
+    
+    data = base64.b64encode(bytes)
+    datastr = data.decode('utf-8')
+
+    data = {"filename": local_filename, "data": datastr}
+
+    url = baseurl + "/upload-image"
+    res = requests.post(url, json=data)
+
+    if valid_status_code(res, url):
+      pass
+    else:
+      return
+
+    print("Image uploaded!")
+    return
+
+  except Exception as e:
+    logging.error("**ERROR: upload() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
 
 
 ############################################################
@@ -231,26 +267,33 @@ try:
   if dbConn is None:
     print('**ERROR: unable to connect to database, exiting')
     sys.exit(0)
+
   
-  user_id = input("Please enter your user ID: ")
-  sqlUser = """
-      SELECT * from users WHERE userid = %s;
-      """
-  
-  dbCursor.execute(sqlUser, [user_id])
-  user = dbCursor.fetchone()
-  
-  if user is None or user == ():
-      print("No such user...")
-  else:
-    baseurl += "/" + str(user_id)
-    print("User successfully found!")
+  while True:
+    username = input("Please enter your username: ")
+    sqlUser = """
+        SELECT * from users WHERE username = %s;
+        """
+    
+    dbCursor.execute(sqlUser, [username])
+    userRow = dbCursor.fetchone()
+    
+    if userRow is None or userRow == ():
+        print("No such user...")
+        continue
+    else:
+      baseurl += "/" + str(username)
+      userid = userRow[1]
+      print("User successfully found with userid", userid)
+      break
 
   cmd = prompt()
   while cmd != 0:
     #
     if cmd == 1:
       journal_upload(baseurl)
+    if cmd == 2:
+      picture_upload(baseurl)
     else:
       print("** Unknown command, try again...")
     #
@@ -267,3 +310,18 @@ except Exception as e:
   logging.error("**ERROR: main() failed:")
   logging.error(e)
   sys.exit(0)
+
+def valid_status_code(res, url):
+    if res.status_code == 200: #success
+      return True
+    elif res.status_code == 400: # no such user
+      body = res.json()
+      print(body)
+      return False
+    else:
+      print("Failed with status code:", res.status_code)
+      print("url: " + url)
+      if res.status_code == 500:
+        body = res.json()
+        print("Error message:", body)
+      return False
