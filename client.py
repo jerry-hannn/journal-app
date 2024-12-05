@@ -112,6 +112,10 @@ def prompt():
     print(">> Enter a command:")
     print("   0 => end")
     print("   1 => journal_upload")
+    print("   2 => picture_upload")
+    print("   3 => get_quote")
+    print("   4 => journal_download")
+    print("   5 => get_stats")
 
     cmd = input()
 
@@ -130,28 +134,52 @@ def prompt():
     print("**ERROR")
     return -1
 
+def valid_status_code(res, url):
+    if res.status_code == 200: #success
+      return True
+    elif res.status_code == 400: # no such user
+      body = res.json()
+      print(body)
+      return False
+    else:
+      print("Failed with status code:", res.status_code)
+      print("url: " + url)
+      if res.status_code == 500:
+        body = res.json()
+        print("Error message from server:", body)
+      return False
+
+
 
 def journal_upload(baseurl):
+  url = baseurl + "/upload-entry/" + str(11111)
   try:
-    sleep_score = input("Rate your sleep today on a scale from 0 to 10: ")
-    food_score = input("Rate your nutrition today on a scale from 0 to 10: ")
-    water_score = input("Rate your hydration today on a scale from 0 to 10: ")
-    social_score = input("Rate your social connection today on a scale from 0 to 10: ")
-    overall_score = input("Rate your overall day on a scale from 0 to 10: ")
+    print("For all ratings, please type in an integer!")
+    sleep_score = int(input("Rate your sleep today on a scale from 0 to 10: "))
+    food_score = int(input("Rate your nutrition today on a scale from 0 to 10: "))
+    water_score = int(input("Rate your hydration today on a scale from 0 to 10: "))
+    social_score = int(input("Rate your social connection today on a scale from 0 to 10: "))
+    overall_score = int(input("Rate your overall day on a scale from 0 to 10: "))
+
+    scores = [sleep_score, food_score, water_score, social_score, overall_score]
+    for score in scores:
+      if score > 10 or score < 0:
+        print("Please make sure your scores are between 0 and 10!")
+        return
+
     notes = input("If you'd like, journal about what happened today: ")
 
     body = {"sleep": sleep_score, "eat": food_score, "water": water_score, 
               "social": social_score, "overall_score": overall_score, "notes": notes}
 
-    url = baseurl + "/upload-entry"
     res = requests.post(url, json=body)
 
     if valid_status_code(res, url):
-      pass
+      print("Successfully uploaded entry!")
     else:
       return
 
-  except:
+  except Exception as e:
     logging.error("**ERROR: journal_upload() failed:")
     logging.error("url: " + url)
     logging.error(e)
@@ -159,6 +187,7 @@ def journal_upload(baseurl):
 
 
 def picture_upload(baseurl):
+  url = baseurl + "/upload-image/" + userid
   try:
     print("Enter picture filename>")
     local_filename = input()
@@ -178,7 +207,6 @@ def picture_upload(baseurl):
 
     data = {"filename": local_filename, "data": datastr}
 
-    url = baseurl + "/upload-image"
     res = requests.post(url, json=data)
 
     if valid_status_code(res, url):
@@ -195,6 +223,16 @@ def picture_upload(baseurl):
     logging.error(e)
     return
 
+def get_quote(baseurl):
+  return
+
+def journal_download(baseurl):
+  return
+
+def get_stats(baseurl):
+  return
+
+
 def get_dbConn(endpoint, portnum, username, pwd, dbname):
   try:
     dbConn = pymysql.connect(host=endpoint,
@@ -206,6 +244,7 @@ def get_dbConn(endpoint, portnum, username, pwd, dbname):
                         
                           
     return dbConn
+  
   except Exception as e:
     logging.error("datatier.get_dbConn() failed:")
     logging.error(e)
@@ -215,7 +254,7 @@ def get_dbConn(endpoint, portnum, username, pwd, dbname):
 # main
 #
 try:
-  print('** Welcome to BenfordApp **')
+  print('** Welcome to JournalApp **')
   print()
 
   # eliminate traceback so we just get error message:
@@ -297,8 +336,7 @@ try:
         print("No such user...")
         continue
     else:
-      baseurl += "/" + str(username)
-      userid = userRow[1]
+      userid = str(userRow[0])
       print("User successfully found with userid", userid)
       break
 
@@ -307,16 +345,20 @@ try:
     #
     if cmd == 1:
       journal_upload(baseurl)
-    if cmd == 2:
+    elif cmd == 2:
       picture_upload(baseurl)
+    elif cmd == 3:
+      get_quote(baseurl)
+    elif cmd == 4:
+      journal_download(baseurl)
+    elif cmd == 5:
+      get_stats(baseurl)
     else:
       print("** Unknown command, try again...")
     #
     cmd = prompt()
 
-  #
-  # done
-  #
+
   print()
   print('** done **')
   sys.exit(0)
@@ -326,18 +368,5 @@ except Exception as e:
   logging.error(e)
   sys.exit(0)
 
-def valid_status_code(res, url):
-    if res.status_code == 200: #success
-      return True
-    elif res.status_code == 400: # no such user
-      body = res.json()
-      print(body)
-      return False
-    else:
-      print("Failed with status code:", res.status_code)
-      print("url: " + url)
-      if res.status_code == 500:
-        body = res.json()
-        print("Error message:", body)
-      return False
+
     
