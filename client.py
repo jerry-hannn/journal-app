@@ -162,7 +162,7 @@ def picture_upload(baseurl):
     else:
       return
 
-    print("Image uploaded!")
+    print("Image uploaded successfully!")
     return
 
   except Exception as e:
@@ -173,22 +173,107 @@ def picture_upload(baseurl):
 
 def get_quote(baseurl):
   url = baseurl + "/generate-quote/" + userid
-  print("Waiting for quote generation...")
-  res = requests.get(url)
+  try:
+    print("Waiting for quote generation...")
+    res = requests.get(url)
 
-  if valid_status_code(res, url):
-    print(res.json()['quote'])
-  else:
+    if valid_status_code(res, url):
+      print(res.json()['quote'])
+    else:
+      return
+  
+  except Exception as e:
+    logging.error("**ERROR: upload() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
     return
   
 
 def journal_download(baseurl):
-  #TODO
-  return
+  url = baseurl + "/download-collage/" + userid
+  try:
+    print("Waiting for collage to download...")
+    res = requests.get(url)
+
+    if valid_status_code(res, url):
+      filename = input("Please type what you would like to name the collage - a .jpg extension will be added to whatever you write: ")
+      filename += ".jpg"
+      with open(filename, "wb") as file:
+                body = res.json()
+                bytes = base64.b64decode(body["collage"])
+                file.write(bytes)
+                print("Collage downloaded successfully as", filename)
+    else:
+      return
+  except Exception as e:
+    logging.error("**ERROR: journal_upload() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
 
 def get_stats(baseurl):
-  #TODO
-  return
+  url = baseurl + "/stats/" + userid
+  try:
+    print("Waiting for collection of stats...")
+    res = requests.get(url)
+
+    if valid_status_code(res, url):
+        print("Here is a ranking of which factors impact your overall day most: ")
+        factors_list = ["sleep", "eat", "water", "social"]
+        coefficients = res.json()["coef"]
+        
+        factors_ranked = sorted(zip(factors_list, coefficients), key=lambda x: abs(x[1]), reverse=True)
+        for i, factor in enumerate(factors_ranked):  
+            print(f"    {i+1}. {factor[0]}: {'negatively' if factor[1] < 0 else 'positively'} impacts your day with score {round(factor[1],2)}")
+
+    else:
+      return
+    
+  except Exception as e:
+    logging.error("**ERROR: get_stats() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
+  
+def get_entries(baseurl):
+  url = baseurl + "/get-entries/" + userid
+  try:
+    print("Waiting for server to return entries...")
+    res = requests.get(url)
+
+    if valid_status_code(res, url):
+        #TODO
+        print("TODO")
+
+    else:
+      return
+    
+  except Exception as e:
+    logging.error("**ERROR: get_stats() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
+
+def get_specific_entry(baseurl):
+  url = baseurl + "/get-entries/" + userid
+  entryID = input("Input the ID of the entry you'd like to read: ")
+  try:
+    print("Waiting for server to return entries...")
+    res = requests.get(url)
+
+    if valid_status_code(res, url):
+        #TODO
+        print("TODO")
+
+    else:
+      return
+    
+  except Exception as e:
+    logging.error("**ERROR: get_stats() failed:")
+    logging.error("url: " + url)
+    logging.error(e)
+    return
+
 
 
 def get_dbConn(endpoint, portnum, username, pwd, dbname):
@@ -311,6 +396,11 @@ try:
       journal_download(baseurl)
     elif cmd == 5:
       get_stats(baseurl)
+    elif cmd == 6:
+      get_entries(baseurl)
+    elif cmd == 7:
+      get_specific_entry(baseurl)
+      
     else:
       print("** Unknown command, try again...")
     #
